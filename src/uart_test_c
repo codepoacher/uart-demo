@@ -1,0 +1,52 @@
+#include<stdio.h>
+#include<stdlib.h>
+#include<unistd.h>
+#include<sys/types.h>
+#include<sys/stat.h>
+#include<fcntl.h>
+#include<termios.h>
+#include<errno.h>
+#include<string.h>
+
+void main(void*args)
+{
+	int fd;
+	int i;
+	int len=0;
+	int n = 0;
+	char read_buf[256]={0};
+	char write_buf[256]={0};
+
+	fd = open("/dev/ttysWK0", O_RDWR | O_NOCTTY);    //默认为阻塞读方式
+	if(fd == -1)
+	{
+		perror("open serial 0\n");
+		exit(0);
+	}
+
+	while(1)
+	{    
+		n = 0;
+		len = 0;
+		bzero(read_buf, sizeof(read_buf));    //类似于memset
+			bzero(write_buf, sizeof(write_buf));
+
+		while( (n = read(fd, read_buf, sizeof(read_buf))) > 0 )
+		{
+			for(i = len; i < (len + n); i++)
+			{
+				write_buf[i] = read_buf[i - len];
+			}
+			len += n;
+		}
+		write_buf[len] = '\0';
+
+		printf("Len %d \n", len);
+		printf("%s \n", write_buf);
+
+		n = write(fd, write_buf, len);
+		printf("write %d chars\n",n);
+
+		sleep(2);
+	}
+}
